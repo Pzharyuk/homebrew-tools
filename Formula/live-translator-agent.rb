@@ -4,6 +4,7 @@ class LiveTranslatorAgent < Formula
   url "https://github.com/Pzharyuk/live-translator-agent/archive/refs/tags/v1.0.0.tar.gz"
   sha256 "48c3438a8fd6508d7faa350f678d2f67129e993d1b1ad301544824254785490d"
   license "MIT"
+  revision 1
 
   depends_on "node"
   depends_on "sox"
@@ -13,7 +14,10 @@ class LiveTranslatorAgent < Formula
     libexec.install Dir["*"]
     (bin/"live-translator-agent").write <<~EOS
       #!/bin/bash
-      exec node #{libexec}/daemon.js "$@"
+      # launchd runs services with a minimal PATH; export HOMEBREW_PREFIX/bin so
+      # the child `sox` process spawned by node-record-lpcm16 is resolvable.
+      export PATH="#{HOMEBREW_PREFIX}/bin:$PATH"
+      exec "#{Formula["node"].opt_bin}/node" "#{libexec}/daemon.js" "$@"
     EOS
   end
 
