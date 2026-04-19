@@ -1,18 +1,16 @@
 class LiveTranslatorAgent < Formula
   desc "Browserless mic streaming agent for Live Translator"
-  homepage "https://github.com/Pzharyuk/live-translator-node"
-  url "https://github.com/Pzharyuk/live-translator-node/archive/refs/tags/v1.0.0.tar.gz"
-  sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+  homepage "https://github.com/Pzharyuk/live-translator-agent"
+  url "https://github.com/Pzharyuk/live-translator-agent/archive/refs/tags/v1.0.0.tar.gz"
+  sha256 "4d62a1c57eeb158bad7ab60a5b17f2c46d677c1c832776a789d672071b11803f"
   license "MIT"
 
   depends_on "node"
   depends_on "sox"
 
   def install
-    cd "agent" do
-      system "npm", "install", "--production"
-      libexec.install Dir["*"]
-    end
+    system "npm", "install", "--production"
+    libexec.install Dir["*"]
     (bin/"live-translator-agent").write <<~EOS
       #!/bin/bash
       exec node #{libexec}/daemon.js "$@"
