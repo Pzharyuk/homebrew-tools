@@ -1,8 +1,8 @@
 class LiveTranslatorAgent < Formula
   desc "Browserless mic streaming agent for Live Translator"
   homepage "https://github.com/Pzharyuk/live-translator-agent"
-  url "https://github.com/Pzharyuk/live-translator-agent/archive/refs/tags/v1.2.1.tar.gz"
-  sha256 "abb0bfc7b29fdb1e2d1d17036cc97d6e41980e018aaa50fd995340cdb46ca0ed"
+  url "https://github.com/Pzharyuk/live-translator-agent/archive/refs/tags/v1.3.0.tar.gz"
+  sha256 "9f42359754a85df3a2116456efe35e993bff4dcb26176fe9ccdf2e33312e820b"
   license "MIT"
 
   depends_on "node"
@@ -98,9 +98,16 @@ class LiveTranslatorAgent < Formula
         cat > ~/.config/live-translator-agent/config.json << 'EOF'
         {
           "serverUrl": "https://translate.onit.systems",
-          "label": "My Mac"
+          "label": "My Mac",
+          "agentPsk": "paste-the-server-PSK-here"
         }
         EOF
+        chmod 600 ~/.config/live-translator-agent/config.json
+
+      The server rejects agents whose `agentPsk` does not match its
+      configured `auth.agent_psk` (the AGENT_PSK env var on the backend).
+      Ask your server admin for the value. The AGENT_PSK environment
+      variable, if set, overrides the config field.
 
       Start the agent:
         brew services start live-translator-agent
