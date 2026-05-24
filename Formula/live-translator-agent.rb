@@ -1,8 +1,8 @@
 class LiveTranslatorAgent < Formula
   desc "Browserless mic streaming agent for Live Translator"
   homepage "https://github.com/Pzharyuk/live-translator-agent"
-  url "https://github.com/Pzharyuk/live-translator-agent/archive/refs/tags/v1.1.0.tar.gz"
-  sha256 "5328d1565be2e2b655af84dc05e275cedb43f7beabdd47ffd20c6a998d9a8dc3"
+  url "https://github.com/Pzharyuk/live-translator-agent/archive/refs/tags/v1.2.0.tar.gz"
+  sha256 "ddc373c843ee2f78ec7a29807dbf06e6ac232dd7b973588da46c2e69a983de38"
   license "MIT"
 
   depends_on "node"
@@ -27,9 +27,72 @@ class LiveTranslatorAgent < Formula
     error_log_path var/"log/live-translator-agent.log"
   end
 
+  def post_install
+    # macOS launchd-spawned processes don't get the standard Microphone
+    # permission prompt — sox is silently killed by TCC until the sox
+    # binary itself is added to System Settings → Privacy & Security →
+    # Microphone. Surface the requirement immediately on install so
+    # users don't hit a confusing "Audio stream error" hours later.
+    # Non-fatal: any failure (headless CI, brew-in-container, dismissed
+    # dialog) is swallowed so install completes regardless.
+    return unless OS.mac?
+
+    sox_path = HOMEBREW_PREFIX/"bin/sox"
+
+    dialog = <<~OSA
+            try
+              display dialog ¬
+                "live-translator-agent v#{version} installed.
+
+      To stream microphone audio, macOS requires you to grant Microphone permission to the sox binary directly — Terminal's grant does NOT cascade to launchd-spawned processes.
+
+      Click 'Open Microphone Settings' below, then:
+
+        1. Click the '+' button (unlock if prompted)
+        2. Press  Cmd+Shift+G  in the file picker
+        3. Paste:  #{sox_path}
+        4. Click Open, then toggle the new entry ON
+
+      After that:
+        brew services start live-translator-agent" ¬
+                buttons {"Skip", "Open Microphone Settings"} ¬
+                default button 2 ¬
+                with title "Live Translator Agent setup" ¬
+                with icon note
+              if button returned of result is "Open Microphone Settings" then
+                do shell script "open 'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone'"
+              end if
+            on error
+              -- User dismissed or osascript unavailable; non-fatal.
+            end try
+    OSA
+    system "osascript", "-e", dialog
+  end
+
   def caveats
+    sox_path = HOMEBREW_PREFIX/"bin/sox"
     <<~EOS
-      Create your config file before starting the service:
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      REQUIRED — macOS Microphone permission (one-time, per Mac)
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      Because the agent runs under `launchd`, macOS will silently kill
+      sox the first time it tries to open the microphone unless the sox
+      binary itself is added to the Microphone privacy list.
+
+      The install dialog should have opened System Settings for you.
+      If you missed it, re-run the helper:
+
+        live-translator-agent --grant-mic
+
+      …or open System Settings manually:
+        System Settings → Privacy & Security → Microphone
+        Click "+" → Cmd+Shift+G → paste:  #{sox_path}
+        Open → toggle ON
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      Config file (create before starting the service):
 
         mkdir -p ~/.config/live-translator-agent
         cat > ~/.config/live-translator-agent/config.json << 'EOF'
@@ -39,11 +102,11 @@ class LiveTranslatorAgent < Formula
         }
         EOF
 
-      Then start the agent:
+      Start the agent:
         brew services start live-translator-agent
 
-      To stream from a non-default mic, add a "device" key to your config.json.
-      Run `sox -d --list-devtypes` to list available audio devices.
+      To stream from a specific mic, pick the device in the
+      live-translator admin UI's Remote Audio Sources panel.
     EOS
   end
 end
