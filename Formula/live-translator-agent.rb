@@ -1,8 +1,8 @@
 class LiveTranslatorAgent < Formula
   desc "Browserless mic streaming agent for Live Translator"
   homepage "https://github.com/Pzharyuk/live-translator-agent"
-  url "https://github.com/Pzharyuk/live-translator-agent/archive/refs/tags/v1.4.2.tar.gz"
-  sha256 "a4d8c70a69b66c428ff535d657c17b025954e9dd0b14da8f218286908febf2e0"
+  url "https://github.com/Pzharyuk/live-translator-agent/archive/refs/tags/v1.4.3.tar.gz"
+  sha256 "3168951fd1cf91c6712999c5c9a35e7c45bcce4c8817c2cb4875437d0f51d182"
   license "MIT"
 
   depends_on "node"
